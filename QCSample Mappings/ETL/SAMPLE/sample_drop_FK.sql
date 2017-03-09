@@ -1,0 +1,10 @@
+alter table QCSAMPLE.SAMPLE
+   drop constraint FK_SAMPLE_01;
+alter table QCSAMPLE.SAMPLE
+   drop constraint FK_SAMPLE_02;
+alter table QCSAMPLE.SAMPLE
+   drop constraint FK_SAMPLE_03;
+alter table QCSAMPLE.SAMPLE
+   drop constraint FK_SAMPLE_04;
+alter table QCSAMPLE.SAMPLE
+   drop constraint FK_SAMPLE_05;

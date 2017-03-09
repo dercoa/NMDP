@@ -1,0 +1,9 @@
+alter table QCSAMPLE.MASTER_LOT
+   add constraint FK_MASTER_LOT_01 foreign key (SAMPLE_SOURCE_IID)
+      references QCSAMPLE.SAMPLE_SOURCE (SAMPLE_SOURCE_IID)
+/
+
+alter table QCSAMPLE.MASTER_LOT
+   add constraint FK_MASTER_LOT_02 foreign key (MASTER_LOT_STATUS_CDE)
+      references QCSAMPLE.MASTER_LOT_STATUS (MASTER_LOT_STATUS_CDE)
+/

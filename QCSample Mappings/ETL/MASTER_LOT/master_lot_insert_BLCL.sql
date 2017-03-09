@@ -1,0 +1,45 @@
+insert into MASTER_LOT (
+MASTER_LOT_IID,
+MASTER_LOT_ID,
+SAMPLE_SOURCE_IID,
+MASTER_LOT_STATUS_CDE,
+SAMPLE_COLLECTION_DTE,
+SAMPLE_SOURCE_AGE_NUM,
+ORIGINAL_QTY,
+ORIGINAL_QTY_UOM,
+USED_QTY,
+USED_QTY_UOM,
+ESTIMATED_SAMPLE_QTY,
+ESTIMATED_SAMPLE_QTY_UOM,
+COMMENT_TXT,
+CREATE_TS,
+CREATE_BY_ID,
+UPDATE_TS,
+UPDATE_BY_ID
+)
+select SEQ_MASTER_LOT.NEXTVAL,
+lpad(replace(e.QC_MASTER_LOT_ID, 'QC', ''),6,'0') as MASTER_LOT_ID,
+ss.SAMPLE_SOURCE_IID,
+case when e.Active = 1 then 'ACTIVE' else 'INACTIVE' end as MASTER_LOT_STATUS_CDE,
+e.COLLECTION_DATE as SAMPLE_COLLECTION_DTE,
+case when ss.SUBJECT_CLASS_CDE in ('CBU', 'MOTHER') 
+  then 0 
+  else floor(months_between(e.COLLECTION_DATE, s.BIRTH_DTE) /12) 
+end as SAMPLE_SOURCE_AGE_NUM,
+nvl(e.VIALS_USED,0) + nvl(e.VIALS_LEFT,0) as ORIGINAL_QTY,
+'unit' as ORIGINAL_QTY_UOM,
+e.VIALS_USED as USED_QTY,
+'unit' as USED_QTY_UOM,
+null as ESTIMATED_SAMPLE_QTY,
+null as ESTIMATED_SAMPLE_QTY_UOM,
+e.Comments as COMMENT_TXT,
+SYSTIMESTAMP as CREATE_TS,
+'bods_user' as CREATE_BY_ID,
+SYSTIMESTAMP as UPDATE_TS,
+'bods_user' as UPDATE_BY_ID
+from ETL_STAGE.QCSAMPLE_INV_EXCEL_BLCL e
+left join ETL_STAGE.QCSAMPLE_INV_SYBASE_DATA s on s.nmdp_id = replace(e.SAMPLE_ID, '-','')
+	and (instr(e.SAMPLE_ID, '-') = 5 and s.subject_classification_desc = 'Donor' or instr(e.SAMPLE_ID, '-') = 4 and s.subject_classification_desc = 'Recipient')
+left join QCSAMPLE.SAMPLE_SOURCE ss on HEXTORAW(s.SUBJECT_GUID) = ss.SAMPLE_SUBJECT_GUID
+where e.QC_MASTER_LOT_ID is not null;
+commit;

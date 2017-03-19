@@ -29,10 +29,8 @@ e.VIALS_USED as USED_QTY,
 'unit' as USED_QTY_UOM,
 null as ESTIMATED_SAMPLE_QTY,
 null as ESTIMATED_SAMPLE_QTY_UOM,
-case when e.VOL_EXTRACTED like '%/%' 
-    then (substr(e.VOL_EXTRACTED, 1, instr(e.VOL_EXTRACTED, '/', 1, 1) - 1) + substr(e.VOL_EXTRACTED, instr(e.VOL_EXTRACTED, '/', 1, 1) + 1, 100)) || ' mL in 2 conical tubes'
-    else e.VOL_EXTRACTED || ' mL in 1 conical tube'
-end as COMMENT_TXT,SYSTIMESTAMP as CREATE_TS,
+e.COMMENTS as COMMENT_TXT,
+SYSTIMESTAMP as CREATE_TS,
 'BODS_LOAD' as CREATE_BY_ID,
 SYSTIMESTAMP as UPDATE_TS,
 'BODS_LOAD' as UPDATE_BY_ID

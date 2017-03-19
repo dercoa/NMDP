@@ -1,0 +1,1 @@
+isql -S syb_dvl3 -U aderco -P Apple462

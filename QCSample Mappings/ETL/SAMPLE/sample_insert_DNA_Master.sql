@@ -37,12 +37,12 @@ QCSAMPLE.SEQ_SAMPLE.NEXTVAL,
 ml.MASTER_LOT_ID || '.' || lpad(l.ll,6,'0') || 'N' as SAMPLE_ID,
 ml.MASTER_LOT_IID,
 'N' as ORIGINAL_SAMPLE_IND,
-e.SAMPLE_ID as SHIPPING_LABEL_ID,
+null as SHIPPING_LABEL_ID,
 e.ML_SAMPLE_TYPE as SAMPLE_TYPE_CDE,
 'MASTER' as SAMPLE_CATEGORY_CDE,
-case when nvl(e.VIALS_LEFT, 0) = 0 then 'DEPLETED' else 'ACTIVE' end as SAMPLE_STATUS_CDE,
+case when ROW_NUMBER() OVER (PARTITION BY ml.MASTER_LOT_IID ORDER BY ml.MASTER_LOT_IID) > e.VIALS_LEFT then 'DEPLETED' else 'ACTIVE' end as SAMPLE_STATUS_CDE,
 e.ML_MEDIUM as SAMPLE_COLL_MEDIUM_CDE,
-null as SAMPLE_CREATION_DTE,
+e.ALIQUOT_DATE as SAMPLE_CREATION_DTE,
 null as LAB_RECEIVED_DTE,
 null as SAMPLE_EXTRACTED_DTE,
 null as SAMPLE_POOLED_DTE,
@@ -52,26 +52,24 @@ e.STORAGE_UNIT as STORAGE_UNIT_NME,
 null as SHELF_NUM,
 null as BOX_NUM,
 null as SLOT_LOCATION_NME,
-e.ML_Unit_Volumne as SAMPLE_UNIT_VOL,
+e.ML_Unit_Volume as SAMPLE_UNIT_VOL,
 e.ML_Unit_Of_Measure as SAMPLE_UNIT_UOM,
-case when nvl(e.VIALS_LEFT, 0) = 0 then null else 1 end as SAMPLES_STORED_QTY,
-case when nvl(e.VIALS_LEFT, 0) = 0 then null else 'unit' end as SAMPLE_STORED_QTY_UOM,
-replace(upper(e.NO_OF_CELLS_VIAL),'X10E6','') as CONCENTRATION_QTY,
-'x10^6 cells/mL' as CONCENTRATION_QTY_UOM,
+case when ROW_NUMBER() OVER (PARTITION BY ml.MASTER_LOT_IID ORDER BY ml.MASTER_LOT_IID) > e.VIALS_LEFT then null else 1 end as SAMPLES_STORED_QTY,
+case when ROW_NUMBER() OVER (PARTITION BY ml.MASTER_LOT_IID ORDER BY ml.MASTER_LOT_IID) > e.VIALS_LEFT then null else 'unit' end as SAMPLE_STORED_QTY_UOM,
+null as CONCENTRATION_QTY,
+null as CONCENTRATION_QTY_UOM,
 null as SAMPLE_LABELED_BY,
 null as COMMENT_TXT,
 SYSTIMESTAMP as CREATE_TS,
-'bods_user' as CREATE_BY_ID,
+'BODS_LOAD' as CREATE_BY_ID,
 SYSTIMESTAMP as UPDATE_TS,
-'bods_user' as UPDATE_BY_ID
-from ETL_STAGE.QCSAMPLE_INV_EXCEL_BLCL e
-left join ETL_STAGE.QCSAMPLE_INV_SYBASE_DATA s on s.nmdp_id = replace(e.SAMPLE_ID, '-','')
-	and (instr(e.SAMPLE_ID, '-') = 5 and s.subject_classification_desc = 'Donor' or instr(e.SAMPLE_ID, '-') = 4 and s.subject_classification_desc = 'Recipient')
-left join QCSAMPLE.SAMPLE_SOURCE ss on HEXTORAW(s.SUBJECT_GUID) = ss.SAMPLE_SUBJECT_GUID
-left join QCSAMPLE.MASTER_LOT ml on ml.SAMPLE_SOURCE_IID = ss.SAMPLE_SOURCE_IID
-left join (select level ll from dual d
-connect by level <=1000) l on l.ll <= ml.ORIGINAL_QTY
-where e.QC_MASTER_LOT_ID is not null;
+'BODS_LOAD' as UPDATE_BY_ID
+from ETL_STAGE.QCSAMPLE_INV_EXCEL_DNA e
+inner join QCSAMPLE.SAMPLE_SOURCE ss on 'QC_DRIVE' || nvl(cast(e.SAMPLE_ID as number(9)), e.QC_MASTER_LOT_ID) = ss.SAMPLE_SOURCE_ID
+inner join QCSAMPLE.MASTER_LOT ml on ml.SAMPLE_SOURCE_IID = ss.SAMPLE_SOURCE_IID and lpad(e.QC_MASTER_LOT_ID, 6, '0') = ml.MASTER_LOT_ID
+inner join (select level ll from dual d
+connect by level <=10000) l on l.ll <= ml.ORIGINAL_QTY
+where e.Active = 1;
 
 commit;
 

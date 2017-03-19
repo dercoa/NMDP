@@ -22,3 +22,14 @@ alter table QCSAMPLE.SAMPLE
    add constraint FK_SAMPLE_05 foreign key (SHIPPING_LABEL_ID)
       references QCSAMPLE.SAMPLE_SHIPMENT (SHIPPING_LABEL_ID)
 /
+
+
+alter table QCSAMPLE.SAMPLE_RELATIONSHIP
+   add constraint FK_SAMPLE_R_FK_SAMPLE_SAMPLE foreign key (SAMPLE_IID)
+      references QCSAMPLE.SAMPLE (SAMPLE_IID)
+/
+
+alter table QCSAMPLE.SAMPLE_RELATIONSHIP
+   add constraint FK_SAMPLE_RELATIONSHIP_02 foreign key (DERIVED_FROM_SAMPLE_IID)
+      references QCSAMPLE.SAMPLE (SAMPLE_IID)
+/

@@ -18,7 +18,7 @@ UPDATE_TS,
 UPDATE_BY_ID
 )
 select SEQ_MASTER_LOT.NEXTVAL,
-lpad(replace(e.QC_MASTER_LOT_ID, 'QC', ''),6,'0') as MASTER_LOT_ID,
+lpad(e.QC_MASTER_LOT_ID, 6, '0') as MASTER_LOT_ID,
 ss.SAMPLE_SOURCE_IID,
 case when e.Active = 1 then 'ACTIVE' else 'INACTIVE' end as MASTER_LOT_STATUS_CDE,
 e.COLLECTION_DATE as SAMPLE_COLLECTION_DTE,
@@ -32,14 +32,14 @@ e.VIALS_USED as USED_QTY,
 'unit' as USED_QTY_UOM,
 null as ESTIMATED_SAMPLE_QTY,
 null as ESTIMATED_SAMPLE_QTY_UOM,
-e.Comments as COMMENT_TXT,
+'Box # ' || e.BOX_NO || ', Start Box Location ' || e.START_BOX_LOC as COMMENT_TXT,
 SYSTIMESTAMP as CREATE_TS,
 'bods_user' as CREATE_BY_ID,
 SYSTIMESTAMP as UPDATE_TS,
 'bods_user' as UPDATE_BY_ID
 from ETL_STAGE.QCSAMPLE_INV_EXCEL_BLCL e
-left join ETL_STAGE.QCSAMPLE_INV_SYBASE_DATA s on s.nmdp_id = replace(e.SAMPLE_ID, '-','')
-	and (instr(e.SAMPLE_ID, '-') = 5 and s.subject_classification_desc = 'Donor' or instr(e.SAMPLE_ID, '-') = 4 and s.subject_classification_desc = 'Recipient')
-left join QCSAMPLE.SAMPLE_SOURCE ss on HEXTORAW(s.SUBJECT_GUID) = ss.SAMPLE_SUBJECT_GUID
-where e.QC_MASTER_LOT_ID is not null;
+inner join QCSAMPLE.SAMPLE_SOURCE ss on e.SAMPLE_ID = ss.SAMPLE_SOURCE_ID
+left join ETL_STAGE.QCSAMPLE_INV_SYBASE_DATA s on s.nmdp_id = replace(e.SAMPLE_ID, '-','') 
+	and (instr(e.SAMPLE_ID, '-') = 5 and s.subject_classification_desc = 'Donor' or instr(e.SAMPLE_ID, '-') = 4 
+	and s.subject_classification_desc = 'Recipient');
 commit;

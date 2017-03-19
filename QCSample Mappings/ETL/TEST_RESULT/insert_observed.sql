@@ -1,0 +1,44 @@
+insert into QCSAMPLE.TEST_RESULT
+(
+	TEST_RESULT_IID,
+	SUBJECT_REF_ID,
+	REPORTING_BP_GUID,
+	REPORTING_METHOD_CDE,
+	SEQ_NUM,
+	TEST_DTE,
+	RESULT_RECEIVED_DTE,
+	TEST_REASON_CDE,
+	TEST_METHOD_CDE,
+	TEST_METHOD_GROUP_CDE,
+	COLLECTION_METHOD_TXT,
+	DOCID_GUID,
+	ORDER_GUID,
+	CREATE_TS,
+	CREATE_BY_ID,
+	UPDATE_TS,
+	UPDATE_BY_ID
+)
+select 
+	SEQ_TEST_RESULT.NEXTVAL,
+--	SYS_GUID() as SUBJECT_REF_ID,
+	cast(otr.nmdp_did as varchar2(50)) as SUBJECT_REF_ID,
+	otr.org_guid as REPORTING_BP_GUID,
+	otr.reporting_method_cde as REPORTING_METHOD_CDE,
+	otr.sequence_num as SEQ_NUM,
+	otr.typing_dte as TEST_DTE,
+	otr.received_dte as RESULT_RECEIVED_DTE,
+	'LAB' as TEST_REASON_CDE,
+	'DNA' as TEST_METHOD_CDE,
+	'DNA' as TEST_METHOD_GROUP_CDE,
+	NULL as COLLECTION_METHOD_TXT,
+	NULL as DOCID_GUID,
+	NULL as ORDER_GUID,
+	SYSTIMESTAMP as CREATE_TS,
+	'BODS_LOAD' as CREATE_BY_ID,
+	SYSTIMESTAMP as UPDATE_TS,
+	'BODS_LOAD' as UPDATE_BY_ID
+from ETL_STAGE.QCSAMPLE_TR_SYBASE_OTR otr
+inner join QCSAMPLE.SAMPLE_SHIPMENT ss on cast(replace(ss.shipping_label_id,'-','') as number) = otr.nmdp_did
+where ss.SHIPPING_LABEL_ID not like '%.%'; -- ignore fake records
+
+commit;

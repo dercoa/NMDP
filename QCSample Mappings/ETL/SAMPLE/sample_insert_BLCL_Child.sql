@@ -42,18 +42,18 @@ case when e.ML_SAMPLE_TYPE = 'BLCL' then 'BC' else null end as SAMPLE_TYPE_CDE,
 'QC' as SAMPLE_CATEGORY_CDE,
 case when nvl(qcdid.CNT_HIST, 0) = 0 then 'ACTIVE' else 'DEPLETED' end as SAMPLE_STATUS_CDE,
 case when e.ML_SAMPLE_TYPE = 'BLCL' then 'SWAB' else null end as SAMPLE_COLL_MEDIUM_CDE,
-qcdid.LST_UPDT_DTE as SAMPLE_CREATION_DTE,
+e.CREATION_DATE as SAMPLE_CREATION_DTE,
 null as LAB_RECEIVED_DTE,
 null as SAMPLE_EXTRACTED_DTE,
 null as SAMPLE_POOLED_DTE,
-null as EXPIRATION_DTE,
+e.EXPIRATION_DATE as EXPIRATION_DTE,
 'Room Temperature' as STORAGE_ENVIRON_NME, 
 'QC Unit' as STORAGE_UNIT_NME,
 null as SHELF_NUM,
 null as BOX_NUM,
 null as SLOT_LOCATION_NME,
 150 as SAMPLE_UNIT_VOL,
-null as SAMPLE_UNIT_UOM,
+'µL' as SAMPLE_UNIT_UOM,
 case when nvl(qcdid.CNT_HIST, 0) = 0 then 1 else null end as SAMPLES_STORED_QTY,
 case when nvl(qcdid.CNT_HIST, 0) = 0 then 'unit' else null end as SAMPLE_STORED_QTY_UOM,
 null as CONCENTRATION_QTY,
@@ -65,17 +65,14 @@ SYSTIMESTAMP as CREATE_TS,
 SYSTIMESTAMP as UPDATE_TS,
 'BODS_LOAD' as UPDATE_BY_ID
 from ETL_STAGE.QCSAMPLE_INV_EXCEL_BLCL e
-left join ETL_STAGE.QCSAMPLE_INV_SYBASE_DATA s on s.nmdp_id = replace(e.SAMPLE_ID, '-','')
-	and (instr(e.SAMPLE_ID, '-') = 5 and s.subject_classification_desc = 'Donor' or instr(e.SAMPLE_ID, '-') = 4 and s.subject_classification_desc = 'Recipient')
-left join QCSAMPLE.SAMPLE_SOURCE ss on HEXTORAW(s.SUBJECT_GUID) = ss.SAMPLE_SUBJECT_GUID
-left join QCSAMPLE.MASTER_LOT ml on ml.SAMPLE_SOURCE_IID = ss.SAMPLE_SOURCE_IID
-left join ( 
-	select QC_DID, NMDP_DID, CNT_HIST, LST_UPDT_DTE
+inner join QCSAMPLE.SAMPLE_SOURCE ss on e.SAMPLE_ID = ss.SAMPLE_SOURCE_ID
+inner join QCSAMPLE.MASTER_LOT ml on ml.SAMPLE_SOURCE_IID = ss.SAMPLE_SOURCE_IID
+inner join ( 
+	select QC_DID, NMDP_DID, CNT_HIST
 	from ETL_STAGE.QCSAMPLE_INV_SYBASE_QC_DID
 	union all
-	select QC_DID, NMDP_DID, CNT_HIST, LST_UPDT_DTE
+	select QC_DID, NMDP_DID, CNT_HIST
 	from ETL_STAGE.QCSAMPLE_INV_SYBASE_QC_DID
-)qcdid on trim(qcdid.QC_DID) = 'QC' || case when length(e.QC_MASTER_LOT_ID) <3 then lpad(e.QC_MASTER_LOT_ID,3,'0') else cast(e.QC_MASTER_LOT_ID as varchar2(50)) end
-where e.QC_MASTER_LOT_ID is not null and qcdid.QC_DID is not null;
+)qcdid on trim(qcdid.QC_DID) = 'QC' || case when length(e.QC_MASTER_LOT_ID) <3 then lpad(e.QC_MASTER_LOT_ID,3,'0') else cast(e.QC_MASTER_LOT_ID as varchar2(50)) end;
 
 commit;

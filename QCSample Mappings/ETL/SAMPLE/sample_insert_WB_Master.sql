@@ -34,15 +34,15 @@ UPDATE_BY_ID
 )
 select 
 QCSAMPLE.SEQ_SAMPLE.NEXTVAL,
-ml_wb_1.MASTER_LOT_ID || '.' || lpad(l.ll,6,'0') || 'W' as SAMPLE_ID,
-ml_wb_1.MASTER_LOT_IID,
+ml.MASTER_LOT_ID || '.' || lpad(l.ll,6,'0') || 'W' as SAMPLE_ID,
+ml.MASTER_LOT_IID,
 'Y' as ORIGINAL_SAMPLE_IND,
 null as SHIPPING_LABEL_ID,
 e.ML_SAMPLE_TYPE as SAMPLE_TYPE_CDE,
 'MASTER' as SAMPLE_CATEGORY_CDE,
 'ACTIVE' as SAMPLE_STATUS_CDE,
 e.ML_MEDIUM as SAMPLE_COLL_MEDIUM_CDE,
-e.Aliquot_Date as SAMPLE_CREATION_DTE,
+e.DATE_CREATED as SAMPLE_CREATION_DTE,
 null as LAB_RECEIVED_DTE,
 null as SAMPLE_EXTRACTED_DTE,
 null as SAMPLE_POOLED_DTE,
@@ -50,16 +50,10 @@ null as EXPIRATION_DTE,
 e.Environment_Name as STORAGE_ENVIRON_NME,
 e.STORAGE_UNIT as STORAGE_UNIT_NME,
 null as SHELF_NUM,
-e.BOX_NO as BOX_NUM,
-e.START_BOX_LOCATION as SLOT_LOCATION_NME,
-case when ROW_NUMBER() OVER(partition by ml_wb_1.master_lot_iid order by ml_wb_1.master_lot_iid) <= nvl(No_of_Vials1,0) 
-  then Volume_In_Vials1
-  else case when ROW_NUMBER() OVER(partition by ml_wb_1.master_lot_iid order by ml_wb_1.master_lot_iid) <= nvl(No_of_Vials1, 0) + nvl(No_of_Vials2, 0)
-    then Volume_In_Vials2
-    else Volume_In_Small_Vials
-    end
-  end as SAMPLE_UNIT_VOL,
-'mL' as SAMPLE_UNIT_UOM,
+null as BOX_NUM,
+null as SLOT_LOCATION_NME,
+e.ML_Unit_Volume as SAMPLE_UNIT_VOL,
+e.ML_Unit_Of_Measure as SAMPLE_UNIT_UOM,
 null as SAMPLES_STORED_QTY,
 null as SAMPLE_STORED_QTY_UOM,
 null as CONCENTRATION_QTY,
@@ -70,16 +64,12 @@ SYSTIMESTAMP as CREATE_TS,
 'BODS_LOAD' as CREATE_BY_ID,
 SYSTIMESTAMP as UPDATE_TS,
 'BODS_LOAD' as UPDATE_BY_ID
-from ETL_STAGE.QCSAMPLE_INV_EXCEL_WB_1 e
-inner join MASTER_LOT ml_dna on cast(ml_dna.MASTER_LOT_ID as number) = cast(e.QC_MASTER as number)
-inner join (
-    select sample_source_iid, max(master_lot_iid) as master_lot_iid
-    from QCSAMPLE.MASTER_LOT
-    group by sample_source_iid
-) max_ml on ml_dna.sample_source_iid = max_ml.sample_source_iid
-inner join QCSAMPLE.MASTER_LOT ml_wb_1 on ml_wb_1.master_lot_iid = max_ml.master_lot_iid
-left join (select level ll from dual d
-connect by level <=10000) l on l.ll <= e.TOTAL_VIALS;
+from ETL_STAGE.QCSAMPLE_INV_EXCEL_WB e
+inner join QCSAMPLE.SAMPLE_SOURCE ss on 'QC_DRIVE' || e.QC_MASTER_LOT_ID = ss.SAMPLE_SOURCE_ID
+inner join QCSAMPLE.MASTER_LOT ml on ml.SAMPLE_SOURCE_IID = ss.SAMPLE_SOURCE_IID and lpad(e.QC_MASTER_LOT_ID, 6, '0') = ml.MASTER_LOT_ID
+inner join (select level ll from dual d
+connect by level <=10000) l on l.ll <= e.VIALS_LEFT;
+
 commit;
 
 

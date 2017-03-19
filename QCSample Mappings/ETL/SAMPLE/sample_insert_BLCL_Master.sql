@@ -37,7 +37,7 @@ QCSAMPLE.SEQ_SAMPLE.NEXTVAL,
 ml.MASTER_LOT_ID || '.' || lpad(l.ll,6,'0') || 'N' as SAMPLE_ID,
 ml.MASTER_LOT_IID,
 'N' as ORIGINAL_SAMPLE_IND,
-null as SHIPPING_LABEL_ID,
+e.SAMPLE_ID as SHIPPING_LABEL_ID,
 e.ML_SAMPLE_TYPE as SAMPLE_TYPE_CDE,
 'MASTER' as SAMPLE_CATEGORY_CDE,
 case when ROW_NUMBER() OVER (PARTITION BY ml.MASTER_LOT_IID ORDER BY ml.MASTER_LOT_IID) > e.VIALS_LEFT then 'DEPLETED' else 'ACTIVE' end as SAMPLE_STATUS_CDE,
@@ -52,24 +52,24 @@ e.STORAGE_UNIT as STORAGE_UNIT_NME,
 null as SHELF_NUM,
 null as BOX_NUM,
 null as SLOT_LOCATION_NME,
-e.ML_Unit_Volume as SAMPLE_UNIT_VOL,
+e.ML_Unit_Volumne as SAMPLE_UNIT_VOL,
 e.ML_Unit_Of_Measure as SAMPLE_UNIT_UOM,
 case when ROW_NUMBER() OVER (PARTITION BY ml.MASTER_LOT_IID ORDER BY ml.MASTER_LOT_IID) > e.VIALS_LEFT then null else 1 end as SAMPLES_STORED_QTY,
 case when ROW_NUMBER() OVER (PARTITION BY ml.MASTER_LOT_IID ORDER BY ml.MASTER_LOT_IID) > e.VIALS_LEFT then null else 'unit' end as SAMPLE_STORED_QTY_UOM,
-null as CONCENTRATION_QTY,
-null as CONCENTRATION_QTY_UOM,
+replace(upper(e.NO_OF_CELLS_VIAL),'X10E6','') as CONCENTRATION_QTY,
+'x10^6 cells/mL' as CONCENTRATION_QTY_UOM,
 null as SAMPLE_LABELED_BY,
 null as COMMENT_TXT,
 SYSTIMESTAMP as CREATE_TS,
-'BODS_LOAD' as CREATE_BY_ID,
+'bods_user' as CREATE_BY_ID,
 SYSTIMESTAMP as UPDATE_TS,
-'BODS_LOAD' as UPDATE_BY_ID
-from ETL_STAGE.QCSAMPLE_INV_EXCEL_DNA e
-inner join QCSAMPLE.SAMPLE_SOURCE ss on 'QC_DRIVE' || nvl(cast(e.SAMPLE_ID as number(9)), e.QC_MASTER_LOT_ID) = ss.SAMPLE_SOURCE_ID
+'bods_user' as UPDATE_BY_ID
+from ETL_STAGE.QCSAMPLE_INV_EXCEL_BLCL e
+inner join QCSAMPLE.SAMPLE_SOURCE ss on e.SAMPLE_ID = ss.SAMPLE_SOURCE_ID
 inner join QCSAMPLE.MASTER_LOT ml on ml.SAMPLE_SOURCE_IID = ss.SAMPLE_SOURCE_IID
-left join (select level ll from dual d
-connect by level <=1000) l on l.ll <= ml.ORIGINAL_QTY
-where e.Active = 1;
+inner join (select level ll from dual d
+connect by level <=10000) l on l.ll <= ml.ORIGINAL_QTY
+where e.QC_MASTER_LOT_ID is not null;
 
 commit;
 

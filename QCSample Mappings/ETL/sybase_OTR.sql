@@ -1,13 +1,38 @@
-select s.nmdp_id, s.subject_guid, s.birth_dte, sc.subject_classification_desc,
-r.sys_cde as race_cde, e.sys_cde as eth_cde, se.sys_cde as sex_cde
-from mdp_sip_prd..t_subject s 
-join mdp_sip_prd..t_subject_classification sc on s.subject_classification_id = sc.subject_classification_id
-left join mdp_sip_prd..t_race_udm r on r.race_udm_id = s.prim_race_id
-left join mdp_sip_prd..t_ethnicity e on e.ethnicity_id = s.prim_ethnicity_id
-left join mdp_sip_prd..t_sex se on se.sex_id = s.sex_id
-where  sc.subject_classification_id in (1,5)
-and
-s.nmdp_id in (
+select
+h.hla_hist_id, 
+h.sequence_num,
+h.typing_dte,
+h.received_dte,
+s.nmdp_id,
+p.phenotype_seq_num,
+rpt.sys_cde as reporting_method_cde,
+org.org_guid
+from mdp_sip_prd..t_hla_hist h
+join mdp_sip_prd..t_phenotype p on h.phenotype_id = p.phenotype_id
+join mdp_sip_prd..t_subject s on s.subject_id = p.subject_id
+left join mdp_dnr_prd..t_qc_qcstore_nmdp_dnr_map m on s.nmdp_id = m.nmdp_did
+left join mdp_sip_prd..t_org_identifier org on h.org_identifier_id = org.org_identifier_id
+left join mdp_sip_prd..t_hla_rpt_system rpt on h.rpt_system_id = rpt.rpt_system_id
+where m.qc_did like 'QC%'
+
+union all
+
+select
+h.hla_hist_id, 
+h.sequence_num,
+h.typing_dte,
+h.received_dte,
+s.nmdp_id,
+p.phenotype_seq_num,
+rpt.sys_cde as reporting_method_cde,
+org.org_guid
+from mdp_sip_prd..t_hla_hist h
+join mdp_sip_prd..t_phenotype p on h.phenotype_id = p.phenotype_id
+join mdp_sip_prd..t_subject s on s.subject_id = p.subject_id
+left join mdp_sip_prd..t_org_identifier org on h.org_identifier_id = org.org_identifier_id
+left join mdp_sip_prd..t_hla_rpt_system rpt on h.rpt_system_id = rpt.rpt_system_id
+
+where s.nmdp_id in (
 016330763
 ,011404597
 ,000842898

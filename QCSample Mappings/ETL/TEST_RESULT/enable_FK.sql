@@ -1,0 +1,19 @@
+alter table QCSAMPLE.TEST_RESULT
+   add constraint FK_TEST_RESULT_02 foreign key (REPORTING_METHOD_CDE)
+      references QCSAMPLE.REPORTING_METHOD (REPORTING_METHOD_CDE)
+/
+
+alter table QCSAMPLE.TEST_RESULT
+   add constraint FK_TEST_RESULT_03 foreign key (TEST_REASON_CDE)
+      references QCSAMPLE.TEST_REASON (TEST_REASON_CDE)
+/
+
+alter table QCSAMPLE.TEST_RESULT
+   add constraint FK_TEST_RESULT_04 foreign key (REPORTING_BP_GUID)
+      references QCSAMPLE.LAB (LAB_BP_GUID)
+/
+
+alter table QCSAMPLE.TEST_RESULT
+   add constraint FK_TEST_RESULT_05 foreign key (TEST_METHOD_GROUP_CDE, TEST_METHOD_CDE)
+      references QCSAMPLE.TEST_METHOD_GROUP_MEMBER (TEST_METHOD_GROUP_CDE, TEST_METHOD_CDE)
+/

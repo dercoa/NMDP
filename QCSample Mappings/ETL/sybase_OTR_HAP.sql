@@ -1,13 +1,37 @@
-select s.nmdp_id, s.subject_guid, s.birth_dte, sc.subject_classification_desc,
-r.sys_cde as race_cde, e.sys_cde as eth_cde, se.sys_cde as sex_cde
-from mdp_sip_prd..t_subject s 
-join mdp_sip_prd..t_subject_classification sc on s.subject_classification_id = sc.subject_classification_id
-left join mdp_sip_prd..t_race_udm r on r.race_udm_id = s.prim_race_id
-left join mdp_sip_prd..t_ethnicity e on e.ethnicity_id = s.prim_ethnicity_id
-left join mdp_sip_prd..t_sex se on se.sex_id = s.sex_id
-where  sc.subject_classification_id in (1,5)
-and
-s.nmdp_id in (
+select 
+  h.hla_hist_id,
+  l.name, 
+  tm.sys_cde, 
+  a1.v3_type as a1_type, 
+  a2.v3_type as a2_type
+from (
+	select  h.hla_hist_id
+	from mdp_sip_prd..t_hla_hist h
+	join mdp_sip_prd..t_phenotype p on h.phenotype_id = p.phenotype_id
+	join mdp_sip_prd..t_subject s on s.subject_id = p.subject_id
+	join mdp_dnr_prd..t_qc_qcstore_nmdp_dnr_map m on s.nmdp_id = m.nmdp_did
+	where m.qc_did like 'QC%'
+) h
+left join mdp_sip_prd..t_hla_hist_detail hd on hd.hla_hist_id = h.hla_hist_id
+left join mdp_dna_prd..t_antigen a1 on hd.antigen1_id = a1.iid_antigen 
+left join mdp_dna_prd..t_antigen a2 on hd.antigen2_id = a2.iid_antigen
+left join mdp_dna_prd..t_hla_locus l on a1.iid_locus = l.iid_hla_locus
+left join mdp_dna_prd..t_typing_method tm on tm.iid_typing_method = a1.iid_typing_method
+
+union all 
+
+select 
+  h.hla_hist_id,
+  l.name, 
+  tm.sys_cde, 
+  a1.v3_type as a1_type, 
+  a2.v3_type as a2_type
+from ( 
+	select h.hla_hist_id
+	from mdp_sip_prd..t_hla_hist h
+	join mdp_sip_prd..t_phenotype p on h.phenotype_id = p.phenotype_id
+	join mdp_sip_prd..t_subject s on s.subject_id = p.subject_id
+where s.nmdp_id in (
 016330763
 ,011404597
 ,000842898
@@ -386,3 +410,9 @@ s.nmdp_id in (
 ,6201431
 ,034554170 
 )
+)h
+left join mdp_sip_prd..t_hla_hist_detail hd on hd.hla_hist_id = h.hla_hist_id
+left join mdp_dna_prd..t_antigen a1 on hd.antigen1_id = a1.iid_antigen 
+left join mdp_dna_prd..t_antigen a2 on hd.antigen2_id = a2.iid_antigen
+left join mdp_dna_prd..t_hla_locus l on a1.iid_locus = l.iid_hla_locus
+left join mdp_dna_prd..t_typing_method tm on tm.iid_typing_method = a1.iid_typing_method

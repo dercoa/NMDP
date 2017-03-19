@@ -1,6 +1,17 @@
+Begin
+Execute Immediate ('drop table ETL_STAGE.QCSAMPLE_INV_EXCEL_CB cascade constraints');
+Exception when others then
+If sqlcode = -942 then
+     Null;
+   Else
+    Raise;
+   End If;
+  End;
+/
+
 create table ETL_STAGE.QCSAMPLE_INV_EXCEL_CB
 (
-QC_Master_Lot_ID number(9),	
+QC_Master_Lot_ID varchar2(50),	
 NMDP_ID varchar2(50),	
 Local_CBU_ID varchar2(50),	
 Date_Collected timestamp(0),	
@@ -14,7 +25,6 @@ Vol_in_vial number,
 Comments varchar2(1000),	
 ML_Medium varchar2(255),
 ML_Sample_Type varchar2(255),
-Collection_Date timestamp(0),
 Environment_Name varchar(255),
 Storage_Unit varchar2(255),
 ML_Unit_Volume number,
@@ -24,7 +34,8 @@ Send_Type varchar2(255),
 FP_QTY_Original number(9), 	
 FP_Quantity_Left number(9), 	
 FP_Vol number(9), 	
-FP_creation_date timestamp(0),	
+FP_creation_date timestamp(0),
+FP_Expiration_Date timestamp(0),	
 FP_Comments varchar2(1000)
 )
 tablespace ETL_STAGE;
